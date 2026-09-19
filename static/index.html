@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cerenity</title>
+<meta name="description" content="Ask about Cerenity plans, practitioners and policies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+/* Quiet editorial. One accent (moss), one radius rule: surfaces and controls 10px,
+   small inline tags 6px. Deliberately not the beige-and-brass palette every wellness
+   product reaches for. */
+:root {
+  --paper:      #f3f4f1;
+  --surface:    #fafbf8;
+  --ink:        #181a15;
+  --muted:      #676c5e;
+  --rule:       #e0e2d9;
+  --accent:     #3f6b3a;
+  --accent-ink: #fafbf8;
+  --accent-soft: rgba(63, 107, 58, .10);
+  --danger:     #8f3a2c;
+  --r: 10px;
+  --r-sm: 6px;
+  --sans: "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "DM Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:      #121410;
+    --surface:    #191c15;
+    --ink:        #e9ebe2;
+    --muted:      #99a08d;
+    --rule:       #2b2f25;
+    --accent:     #8fbf7f;
+    --accent-ink: #121410;
+    --accent-soft: rgba(143, 191, 127, .12);
+    --danger:     #e0917f;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 15.5px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 100dvh;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+.wrap { width: 100%; max-width: 46rem; margin-inline: auto; padding-inline: 1.5rem; }
+
+/* header ------------------------------------------------------------------ */
+header {
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  position: sticky; top: 0; z-index: 10;
+}
+header .wrap {
+  height: 68px;
+  display: flex; align-items: center; gap: 1rem;
+}
+.brand {
+  font-weight: 600; font-size: 1.0625rem; letter-spacing: -.015em;
+  margin: 0; margin-right: auto;
+}
+.model {
+  font: 400 11.5px/1 var(--mono);
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: .4rem .5rem;
+  white-space: nowrap;
+}
+button {
+  font: inherit; color: inherit; cursor: pointer;
+  border: 1px solid var(--rule); background: var(--surface);
+  border-radius: var(--r);
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+button:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--rule)); }
+button:active { transform: translateY(1px); }
+.ghost {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: .8125rem; color: var(--muted);
+  padding: .4rem .7rem;
+  background: transparent;
+}
+.ghost:hover { color: var(--ink); }
+
+/* thread ------------------------------------------------------------------ */
+#scroll { overflow-y: auto; }
+#thread { padding-block: 2.5rem 1rem; display: flex; flex-direction: column; gap: 2.25rem; }
+
+.turn { animation: rise .32s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+
+.turn.user {
+  align-self: flex-end;
+  max-width: 34ch;
+  text-align: right;
+  color: var(--muted);
+}
+.turn.assistant { max-width: 62ch; }
+.turn.assistant p { margin: 0 0 .85rem; }
+.turn.assistant p:last-child { margin-bottom: 0; }
+.turn.assistant ul { margin: 0 0 .85rem; padding-left: 1.1rem; }
+.turn.assistant li { margin-bottom: .3rem; }
+.turn.assistant code {
+  font: 400 .875em/1 var(--mono);
+  background: var(--accent-soft);
+  padding: .15em .35em; border-radius: var(--r-sm);
+}
+.streaming::after {
+  content: ""; display: inline-block;
+  width: .5em; height: 1em; margin-left: .12em;
+  background: var(--accent); vertical-align: -.16em;
+  animation: blink 1.1s steps(2, start) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* retrieval status and citations ------------------------------------------ */
+.status {
+  display: flex; align-items: center; gap: .55rem;
+  font-size: .8125rem; color: var(--muted);
+}
+.status i { color: var(--accent); }
+.status .dots::after {
+  content: ""; animation: dots 1.4s steps(4, end) infinite;
+}
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+details.sources { margin-top: 1rem; }
+details.sources summary {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .8125rem; color: var(--muted);
+  cursor: pointer; list-style: none; user-select: none;
+  border-radius: var(--r-sm);
+}
+details.sources summary::-webkit-details-marker { display: none; }
+details.sources summary:hover { color: var(--ink); }
+details.sources summary i { transition: transform .2s ease; }
+details.sources[open] summary i { transform: rotate(180deg); }
+.source {
+  display: grid; grid-template-columns: auto 1fr; gap: .1rem .7rem;
+  padding-top: .85rem; margin-top: .85rem;
+  border-top: 1px solid var(--rule);
+}
+.source:first-of-type { border-top: 0; }
+.kind {
+  grid-row: span 2;
+  font: 500 10px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--accent); background: var(--accent-soft);
+  border-radius: var(--r-sm); padding: .35rem .4rem; margin-top: .15rem;
+  height: fit-content;
+}
+.source b { font-weight: 500; font-size: .875rem; }
+.source span { font-size: .8125rem; color: var(--muted); line-height: 1.5; }
+
+.failure {
+  border-left: 2px solid var(--danger);
+  padding-left: .9rem;
+  color: var(--danger);
+  font-size: .9375rem;
+}
+.failure button { margin-top: .6rem; padding: .35rem .7rem; font-size: .8125rem; }
+
+/* empty state ------------------------------------------------------------- */
+#empty { padding-block: 3.5rem 1rem; max-width: 40rem; }
+#empty h2 {
+  font-size: clamp(1.6rem, 4.2vw, 2.15rem); line-height: 1.2;
+  letter-spacing: -.028em; font-weight: 500; margin: 0 0 .7rem;
+}
+#empty > p { color: var(--muted); margin: 0 0 2.25rem; max-width: 42ch; }
+#empty ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+#empty button {
+  width: 100%; text-align: left; padding: .85rem 1rem;
+  font-size: .9375rem; line-height: 1.45;
+}
+#empty button:hover { background: var(--accent-soft); }
+
+/* composer ---------------------------------------------------------------- */
+footer { border-top: 1px solid var(--rule); background: var(--paper); }
+footer .wrap { padding-block: 1rem 1.25rem; }
+form {
+  display: flex; align-items: flex-end; gap: .5rem;
+  background: var(--surface);
+  border: 1px solid var(--rule); border-radius: var(--r);
+  padding: .5rem .5rem .5rem .9rem;
+  transition: border-color .18s ease;
+}
+form:focus-within { border-color: var(--accent); }
+textarea {
+  flex: 1; border: 0; outline: 0; resize: none; background: transparent;
+  color: var(--ink); font: inherit; padding: .45rem 0; max-height: 9rem;
+}
+textarea::placeholder { color: var(--muted); }
+#send {
+  flex: none; width: 34px; height: 34px;
+  display: grid; place-items: center; font-size: 17px;
+  background: var(--accent); color: var(--accent-ink); border-color: transparent;
+}
+#send:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+.note { font-size: .75rem; color: var(--muted); margin: .65rem 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .streaming::after { opacity: 1; }
+}
+@media (max-width: 480px) {
+  .wrap { padding-inline: 1.1rem; }
+  header .wrap { height: 60px; }
+  .model { display: none; }
+  .turn.user { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1 class="brand">Cerenity</h1>
+    <span class="model" id="model">gemini-2.5-flash</span>
+    <button class="ghost" id="reset" type="button">
+      <i class="ph ph-plus" aria-hidden="true"></i> New conversation
+    </button>
+  </div>
+</header>
+
+<div id="scroll">
+  <main class="wrap" id="thread" aria-label="Conversation">
+    <section id="empty">
+      <h2>Ask about plans, practitioners, or how any of this works.</h2>
+      <p>Answers come from Cerenity's handbook and member records. Every reply shows what it read.</p>
+      <ul>
+        <li><button type="button">What does the Household plan include?</button></li>
+        <li><button type="button">How are my session notes stored, and who can read them?</button></li>
+        <li><button type="button">I want help with burnout. Who could I see on Plus, and what happens in the first session?</button></li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <form id="composer">
+      <label class="sr-only" for="input">Your message</label>
+      <textarea id="input" rows="1" placeholder="Ask something" autocomplete="off"></textarea>
+      <button id="send" type="submit" aria-label="Send message">
+        <i class="ph ph-arrow-up" aria-hidden="true"></i>
+      </button>
+    </form>
+    <p class="note">Cerenity is not an emergency service. In a crisis, call or text 988 in the US.</p>
+  </div>
+</footer>
+
+<div class="sr-only" id="announce" aria-live="polite"></div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const thread = $("#thread"), scroller = $("#scroll"), input = $("#input"),
+      form = $("#composer"), send = $("#send"), announce = $("#announce");
+
+const TOOL_LABEL = {
+  search_handbook: "Reading the handbook",
+  list_plans: "Checking the plans table",
+  find_practitioners: "Searching the practitioner directory",
+};
+
+let threadId = localStorage.getItem("cerenity.thread");
+if (!threadId) localStorage.setItem("cerenity.thread", threadId = crypto.randomUUID());
+let busy = false;
+
+/* Escape first, then add tags, so nothing the model emits can become markup. */
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const inline = (s) => esc(s)
+  .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+  .replace(/`([^`]+)`/g, "<code>$1</code>");
+
+// ponytail: enough markdown for what a chat model actually emits. Reach for a real parser
+// only if the replies start carrying tables or nested lists.
+function render(text) {
+  return text.trim().split(/\n{2,}/).map((block) => {
+    const lines = block.split("\n");
+    if (lines.every((l) => /^\s*[-*]\s+/.test(l))) {
+      return "<ul>" + lines.map((l) => `<li>${inline(l.replace(/^\s*[-*]\s+/, ""))}</li>`).join("") + "</ul>";
+    }
+    return `<p>${inline(block.replace(/\n/g, " "))}</p>`;
+  }).join("");
+}
+
+function atBottom() {
+  return scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
+}
+function follow(wasAtBottom) {
+  if (wasAtBottom) scroller.scrollTop = scroller.scrollHeight;
+}
+
+function addTurn(role) {
+  $("#empty")?.remove();
+  const el = document.createElement("div");
+  el.className = `turn ${role}`;
+  thread.append(el);
+  return el;
+}
+
+function addSources(el, items) {
+  if (!items.length) return;
+  const seen = new Set(), unique = items.filter((s) => !seen.has(s.label) && seen.add(s.label));
+  const d = document.createElement("details");
+  d.className = "sources";
+  d.innerHTML =
+    `<summary>${unique.length} source${unique.length > 1 ? "s" : ""} ` +
+    `<i class="ph ph-caret-down" aria-hidden="true"></i></summary>` +
+    unique.map((s) => `<div class="source">` +
+      `<span class="kind">${s.kind === "sql" ? "SQL" : "Doc"}</span>` +
+      `<b>${esc(s.label)}</b><span>${esc(s.detail || "")}</span></div>`).join("");
+  el.append(d);
+}
+
+function fail(el, message, retry) {
+  el.innerHTML = "";
+  const box = document.createElement("div");
+  box.className = "failure";
+  box.innerHTML = `<i class="ph ph-warning-circle" aria-hidden="true"></i> ${esc(message)}`;
+  const again = document.createElement("button");
+  again.type = "button";
+  again.textContent = "Try again";
+  again.onclick = () => { el.remove(); ask(retry); };
+  box.append(again);
+  el.append(box);
+  announce.textContent = message;
+}
+
+async function ask(text) {
+  if (busy) return;
+  busy = true; send.disabled = true;
+
+  addTurn("user").textContent = text;
+  const el = addTurn("assistant");
+  const status = document.createElement("p");
+  status.className = "status";
+  status.innerHTML = `<i class="ph ph-circle-notch" aria-hidden="true"></i><span>Thinking</span><span class="dots"></span>`;
+  el.append(status);
+  scroller.scrollTop = scroller.scrollHeight;
+
+  const body = document.createElement("p");
+  body.className = "streaming";
+  let answer = "", sources = [];
+
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ thread: threadId, text }),
+    });
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += value;
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const e = JSON.parse(line);
+        const stick = atBottom();
+
+        if (e.t === "retrieving") {
+          status.querySelector("span").textContent = TOOL_LABEL[e.tool] || "Retrieving";
+        } else if (e.t === "sources") {
+          sources = sources.concat(e.items || []);
+        } else if (e.t === "token") {
+          if (status.isConnected) { status.remove(); el.append(body); }
+          answer += e.v;
+          body.textContent = answer;
+        } else if (e.t === "error") {
+          fail(el, e.v, text);
+          return;
+        }
+        follow(stick);
+      }
+    }
+
+    status.remove();
+    if (!answer.trim()) { fail(el, "The model returned an empty reply.", text); return; }
+    body.className = "";
+    body.outerHTML = render(answer);
+    addSources(el, sources);
+    announce.textContent = answer;
+  } catch (err) {
+    fail(el, err.message || "Could not reach the server.", text);
+  } finally {
+    busy = false; send.disabled = false;
+    input.focus();
+  }
+}
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text || busy) return;
+  input.value = "";
+  input.style.height = "auto";
+  ask(text);
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+});
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = input.scrollHeight + "px";
+});
+
+thread.addEventListener("click", (e) => {
+  const suggestion = e.target.closest("#empty button");
+  if (suggestion) ask(suggestion.textContent.trim());
+});
+
+$("#reset").addEventListener("click", () => {
+  localStorage.setItem("cerenity.thread", threadId = crypto.randomUUID());
+  location.reload();
+});
+
+/* Replay the message store so a reload keeps the conversation. */
+(async () => {
+  try {
+    const { model, turns } = await (await fetch(`/history?thread=${encodeURIComponent(threadId)}`)).json();
+    if (model) $("#model").textContent = model;
+    for (const turn of turns || []) {
+      const el = addTurn(turn.role);
+      if (turn.role === "user") { el.textContent = turn.text; continue; }
+      el.innerHTML = render(turn.text);
+      addSources(el, turn.sources || []);
+    }
+    scroller.scrollTop = scroller.scrollHeight;
+  } catch { /* first visit, or the server is still booting: the empty state stands */ }
+  input.focus();
+})();
+</script>
+</body>
+</html>
